@@ -42,7 +42,7 @@ console.log(parsed);
 [build-badge]: https://github.com/seemorg/markdown-parser/workflows/CI/badge.svg
 [build]: https://github.com/seemorg/markdown-parser/actions?query=workflow%3ACI
 [license-badge]: https://badgen.net/github/license/openiti/markdown-parser
-[license]: https://github.com/seemorg/markdown-parser/blob/master/LICENSE
+[license]: https://github.com/seemorg/markdown-parser/blob/main/LICENSE
 [npm]: https://www.npmjs.com/package/@openiti/markdown-parser
 [npm-badge]: https://badgen.net/npm/v/@openiti/markdown-parser
 [downloads-badge]: https://img.shields.io/npm/dm/@openiti/markdown-parser.svg
