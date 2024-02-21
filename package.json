@@ -12,11 +12,6 @@
   "files": [
     "dist"
   ],
-  "release": {
-    "branches": [
-      "main"
-    ]
-  },
   "scripts": {
     "start": "tsup --watch",
     "build": "tsup",
@@ -57,6 +52,11 @@
       "limit": "15 KB"
     }
   ],
+  "release": {
+    "branches": [
+      "main"
+    ]
+  },
   "engines": {
     "node": ">=12"
   }
