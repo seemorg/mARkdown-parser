@@ -70,6 +70,7 @@ The following is an example output of the parser, showing how it structures diff
     "type": "paragraph",
     "content": "قال الإمام العلامة شيخ الإسلام تقي الدين أبو العباس أحمد بن عبدالحليم ابن تيمية رحمه الله"
   }
+  ...
 ]
 ```
 
