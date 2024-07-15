@@ -5,7 +5,16 @@ import { sanitizeLine } from './utils/sanitize';
 import { splitStringByHemistichs } from './utils/verse';
 
 // @see https://maximromanov.github.io/mARkdown/#-section-headers
-const headers = ['### |||||', '### ||||', '### |||', '### ||', '### |'];
+const handleHeader = (line: string) => {
+  const match = line.match(/^### (\|+)\s*(.*)/);
+  if (match) {
+    const level = match[1].length;
+    const title = match[2].trim();
+    return { level, title };
+  }
+
+  return null;
+};
 
 // @see https://maximromanov.github.io/mARkdown/#-biographies-and-events
 const biosAndEvents = [
@@ -36,7 +45,7 @@ const biosAndEvents = [
 ];
 
 export function parseMarkdown(markdownText: string): ParseResult {
-  const lines = markdownText.split('\n').filter((line) => line.trim() !== '');
+  const lines = markdownText.split('\n');
 
   const metadata: ParseMetaData = {};
   const content: Block[] = [];
@@ -100,14 +109,16 @@ export function parseMarkdown(markdownText: string): ParseResult {
     } else if (line.startsWith('~~')) {
       currentParagraph += line.slice(2).trim() + ' ';
     } else {
-      headers.forEach((header, index) => {
-        if (line.startsWith(header)) {
+      if (line.startsWith('### |')) {
+        const headerValue = handleHeader(line);
+        if (headerValue) {
           content.push({
-            type: `header-${index + 1}` as 'header-1',
-            content: line.slice(header.length).trim(),
+            type: 'header',
+            level: headerValue.level,
+            content: headerValue.title,
           });
         }
-      });
+      }
 
       biosAndEvents.forEach((entry) => {
         if (line.startsWith(entry.prefix)) {

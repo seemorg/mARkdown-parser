@@ -1,15 +1,11 @@
 export type Block = (
   | {
-      type:
-        | 'title'
-        | 'header-1'
-        | 'header-2'
-        | 'header-3'
-        | 'header-4'
-        | 'header-5'
-        | 'paragraph'
-        | 'blockquote'
-        | 'category';
+      type: 'header';
+      level: number;
+      content: string;
+    }
+  | {
+      type: 'title' | 'paragraph' | 'blockquote' | 'category';
       content: string;
     }
   | {
