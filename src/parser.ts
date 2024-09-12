@@ -362,7 +362,6 @@ export function parser(_text: string, strict = false) {
           acc[key] = value;
         }
       }
-
       return acc;
     }, {} as Record<string, string>),
   };
