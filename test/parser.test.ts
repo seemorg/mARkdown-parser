@@ -44,13 +44,6 @@ const expected = [
     content: 'رسالة في التوبة',
   },
   {
-    type: 'pageNumber',
-    content: {
-      volume: '01',
-      page: '218',
-    },
-  },
-  {
     type: 'paragraph',
     content: 'فصل',
   },
@@ -90,13 +83,7 @@ const expected = [
     type: 'paragraph',
     content: 'الآيات ( سورة الزمر 53 55 )',
   },
-  {
-    type: 'pageNumber',
-    content: {
-      volume: '01',
-      page: '219',
-    },
-  },
+
   {
     type: 'paragraph',
     content: 'وقال تعالى',
@@ -148,18 +135,11 @@ const expected = [
     type: 'paragraph',
     content: 'سورة البقرة 35 37',
   },
-  {
-    type: 'pageNumber',
-    content: {
-      volume: '01',
-      page: '220',
-    },
-  },
 ];
 
 describe('parseMarkdown', () => {
   it('should return block in expected format', () => {
     const result = parseMarkdown(testString);
-    expect(result.content).toEqual(expected);
+    expect(result.content.flatMap((item) => item.blocks)).toEqual(expected);
   });
 });

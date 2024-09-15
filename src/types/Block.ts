@@ -1,3 +1,5 @@
+import { Page } from './Page';
+
 export type Block = (
   | {
       type: 'header';
@@ -7,13 +9,6 @@ export type Block = (
   | {
       type: 'title' | 'paragraph' | 'blockquote' | 'category';
       content: string;
-    }
-  | {
-      type: 'pageNumber';
-      content: {
-        volume: string;
-        page: string;
-      };
     }
   | {
       type: 'verse';
@@ -40,3 +35,5 @@ export type BlockType = Block['type'];
 export type BlockExtraContext = NonNullable<Block['extraContext']>;
 
 export type TypedBlock<T extends BlockType> = Extract<Block, { type: T }>;
+
+export type ContentItem = Partial<Page> & { blocks: Block[] };

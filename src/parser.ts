@@ -1,4 +1,6 @@
-import type { Block, ParseResult, ParseMetaData } from './types';
+import type { Block, ParseResult, ParseMetaData, ContentItem } from './types';
+import { Chapter } from './types/Chapter';
+import { Page } from './types/Page';
 import { splitParagraphByBlockQuotes } from './utils/block-quote';
 import { extractPageNumberFromLine } from './utils/page';
 import { sanitizeLine } from './utils/sanitize';
@@ -9,7 +11,18 @@ const handleHeader = (line: string) => {
   const match = line.match(/^### (\|+)\s*(.*)/);
   if (match) {
     const level = match[1].length;
-    const title = match[2].trim();
+    let title = match[2].trim().replace(/@QB@|@QE@/g, '');
+
+    // if the title has an opening or closing parentheses, but missing the other one, add it
+    if (title.includes('(') && !title.includes(')')) {
+      title += ')';
+    } else if (title.includes(')') && !title.includes('(')) {
+      title = '(' + title;
+    }
+
+    // remove space between parentheses and text inside them
+    title = title.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
+
     return { level, title };
   }
 
@@ -48,11 +61,30 @@ export function parseMarkdown(markdownText: string): ParseResult {
   const lines = markdownText.split('\n');
 
   const metadata: ParseMetaData = {};
-  const content: Block[] = [];
+  const chapters: Chapter[] = [];
+  const content: ContentItem[] = [];
 
   let isMetadata = true;
   let currentParagraph = '';
   let currentParagraphContext: Block['extraContext'] | undefined;
+  let currentPage: Page | null = null;
+  let currentBlocks: Block[] = [];
+
+  const addContentBlock = (block: Block) => {
+    if (currentPage) {
+      currentBlocks.push(block);
+    } else {
+      content.push({ blocks: [block] });
+    }
+  };
+
+  const finalizePage = () => {
+    if (currentPage && currentBlocks.length > 0) {
+      content.push({ ...currentPage, blocks: currentBlocks });
+      currentBlocks = [];
+      // currentPage = null;
+    }
+  };
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
@@ -86,18 +118,21 @@ export function parseMarkdown(markdownText: string): ParseResult {
     // PageV##P###, where V## is the volume number, and P### is the page number. Volume number must be two digits, page number—three (padded with zeros when necessary)
     const pageNumber = extractPageNumberFromLine(line);
     if (pageNumber) {
-      line = line.replace(pageNumber.string, '');
+      const { string: pageString, volume, page } = pageNumber;
+      currentPage = { volume, page };
+      line = line.replace(pageString, '');
+      finalizePage();
     }
 
     // @see https://maximromanov.github.io/mARkdown/#morphological-patterns
     if (line.startsWith('#~:')) {
       const category = line.slice(3).replaceAll(':', '').trim();
       if (category !== 'undefined') {
-        content.push({ type: 'category', content: category });
+        addContentBlock({ type: 'category', content: category });
       }
     } else if (line.startsWith('# |')) {
       const title = line.slice(3).trim();
-      content.push({ type: 'title', content: title });
+      addContentBlock({ type: 'title', content: title });
     } else if (line.startsWith('# ')) {
       currentParagraph = line.slice(2).trim() + ' ';
 
@@ -112,17 +147,23 @@ export function parseMarkdown(markdownText: string): ParseResult {
       if (line.startsWith('### |')) {
         const headerValue = handleHeader(line);
         if (headerValue) {
-          content.push({
+          const headerBlock = {
             type: 'header',
             level: headerValue.level,
             content: headerValue.title,
+          } as Block;
+          addContentBlock(headerBlock);
+          chapters.push({
+            ...(currentPage ? currentPage : {}),
+            level: headerValue.level,
+            title: headerValue.title,
           });
         }
       }
 
       biosAndEvents.forEach((entry) => {
         if (line.startsWith(entry.prefix)) {
-          content.push({
+          addContentBlock({
             type: 'paragraph',
             content: line.slice(entry.prefix.length).trim(),
             extraContext: entry.context as Block['extraContext'],
@@ -141,7 +182,7 @@ export function parseMarkdown(markdownText: string): ParseResult {
 
         if (hemistichs.length > 1) {
           // this is a verse
-          content.push({
+          addContentBlock({
             type: 'verse',
             content: hemistichs.map((hemistich) => hemistich.trim()),
           });
@@ -151,7 +192,7 @@ export function parseMarkdown(markdownText: string): ParseResult {
             if (currentParagraphContext) {
               segment.extraContext = currentParagraphContext;
             }
-            content.push(segment);
+            addContentBlock(segment);
           });
         }
 
@@ -159,14 +200,9 @@ export function parseMarkdown(markdownText: string): ParseResult {
         currentParagraphContext = undefined;
       }
     }
-
-    if (pageNumber) {
-      content.push({
-        type: 'pageNumber',
-        content: { volume: pageNumber.volume, page: pageNumber.page },
-      });
-    }
   }
 
-  return { metadata, content };
+  finalizePage();
+
+  return { metadata, chapters, content };
 }
