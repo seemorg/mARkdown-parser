@@ -89,10 +89,9 @@ export function removePhraseLvTags(s: string): string {
 
 function parseLine(
   taggedIl: string,
-  _index: number,
+  index: number,
   obj: typeof Line = Line,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  firstToken: any | null = null
+  firstToken: any = null
 ): Line | null {
   const il = taggedIl.replace(t.LINE, '');
   const textOnly = removePhraseLvTags(il);
