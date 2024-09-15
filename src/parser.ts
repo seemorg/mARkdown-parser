@@ -1,4 +1,10 @@
-import type { Block, ParseResult, ParseMetaData, ContentItem } from './types';
+import type {
+  Block,
+  ParseResult,
+  ParseMetaData,
+  ContentItem,
+  TypedBlock,
+} from './types';
 import { Chapter } from './types/Chapter';
 import { Page } from './types/Page';
 import { splitParagraphByBlockQuotes } from './utils/block-quote';
@@ -67,23 +73,33 @@ export function parseMarkdown(markdownText: string): ParseResult {
   let isMetadata = true;
   let currentParagraph = '';
   let currentParagraphContext: Block['extraContext'] | undefined;
+
   let currentPage: Page | null = null;
   let currentBlocks: Block[] = [];
+  let currentHeaders: TypedBlock<'header'>[] = [];
 
   const addContentBlock = (block: Block) => {
-    if (currentPage) {
-      currentBlocks.push(block);
-    } else {
-      content.push({ blocks: [block] });
+    currentBlocks.push(block);
+    if (block.type === 'header') {
+      currentHeaders.push(block);
     }
   };
 
   const finalizePage = () => {
-    if (currentPage && currentBlocks.length > 0) {
-      content.push({ ...currentPage, blocks: currentBlocks });
-      currentBlocks = [];
-      // currentPage = null;
-    }
+    content.push({
+      ...(currentPage ? currentPage : {}),
+      blocks: currentBlocks,
+    });
+    chapters.push(
+      ...(currentHeaders.map((header) => ({
+        ...(currentPage ? currentPage : {}),
+        level: header.level,
+        title: header.content,
+      })) as Chapter[])
+    );
+    currentBlocks = [];
+    currentHeaders = [];
+    currentPage = null;
   };
 
   for (let i = 0; i < lines.length; i++) {
@@ -118,10 +134,9 @@ export function parseMarkdown(markdownText: string): ParseResult {
     // PageV##P###, where V## is the volume number, and P### is the page number. Volume number must be two digits, page number—three (padded with zeros when necessary)
     const pageNumber = extractPageNumberFromLine(line);
     if (pageNumber) {
-      const { string: pageString, volume, page } = pageNumber;
+      const { volume, page } = pageNumber;
       currentPage = { volume, page };
-      line = line.replace(pageString, '');
-      finalizePage();
+      line = line.replace(pageNumber.string, '');
     }
 
     // @see https://maximromanov.github.io/mARkdown/#morphological-patterns
@@ -153,11 +168,6 @@ export function parseMarkdown(markdownText: string): ParseResult {
             content: headerValue.title,
           } as Block;
           addContentBlock(headerBlock);
-          chapters.push({
-            ...(currentPage ? currentPage : {}),
-            level: headerValue.level,
-            title: headerValue.title,
-          });
         }
       }
 
@@ -199,6 +209,10 @@ export function parseMarkdown(markdownText: string): ParseResult {
         currentParagraph = '';
         currentParagraphContext = undefined;
       }
+    }
+
+    if (currentPage) {
+      finalizePage();
     }
   }
 
