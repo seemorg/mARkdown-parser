@@ -1,5 +1,11 @@
 import { parseMarkdown } from '../src/parser';
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+
+const sahihBukhari = fs.readFileSync('test/sahih-bukhari.txt', 'utf-8');
+const sahihBukhariResult = JSON.parse(
+  fs.readFileSync('test/sahih-bukhari.json', 'utf-8')
+);
 
 const testString = `
 # | رسالة في التوبة PageV01P218
@@ -141,5 +147,10 @@ describe('parseMarkdown', () => {
   it('should return block in expected format', () => {
     const result = parseMarkdown(testString);
     expect(result.content.flatMap((item) => item.blocks)).toEqual(expected);
+  });
+
+  it('should return block in expected format (sahih bukhari)', () => {
+    const result = parseMarkdown(sahihBukhari);
+    expect(result).toEqual(sahihBukhariResult);
   });
 });
