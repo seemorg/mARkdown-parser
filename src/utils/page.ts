@@ -2,9 +2,11 @@ import { Page } from '../types/Page';
 
 type PageResult =
   | (Page & {
-      string: string;
+      strings: string[];
     })
   | null;
+
+const pageNumberRegex = /PageV\d{2}P\d{3,4}/g;
 
 /**
  * This function extracts the page number from the line.
@@ -15,12 +17,33 @@ type PageResult =
  */
 export function extractPageNumberFromLine(line: string): PageResult | null {
   // match currentParagraph with regex to get the page number
-  const pageNumber = line.match(/PageV\d{2}P\d{3}/);
-  if (!pageNumber?.[0]) return null;
+  // PageV01P001 or PageV01P0001
+  const pageNumberMatches = Array.from(line.matchAll(pageNumberRegex));
+  if (pageNumberMatches.length === 0) {
+    return null;
+  }
+
+  const stringsToRemove: string[] = [];
+  let vol: string;
+  let pg: number;
+
+  pageNumberMatches.forEach((match) => {
+    const matchString = match[0];
+    stringsToRemove.push(matchString);
+
+    const page = parseInt(matchString.slice(8));
+
+    if (!pg || page < pg) {
+      const volume = matchString.slice(5, 7);
+      vol = volume;
+      pg = page;
+    }
+  });
 
   return {
-    string: pageNumber[0], // the matched string to be removed from the currentParagraph
-    volume: pageNumber[0].slice(5, 7),
-    page: parseInt(pageNumber[0].slice(8)),
+    // the matched strings to be removed from the currentParagraph
+    strings: stringsToRemove,
+    volume: vol!,
+    page: pg!,
   };
 }

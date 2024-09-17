@@ -27,7 +27,17 @@ export type Block = (
     | 'historical_events'
     | 'historical_events_batch'
     | 'riwaya'
-    | 'hukum';
+    | 'hukum'
+    | 'dictionary_nis'
+    | 'dictionary_top'
+    | 'dictionary_lex'
+    | 'dictionary_bib'
+    | 'editorial'
+    | 'appendix'
+    | 'paratext'
+    | 'dox'
+    | 'dox_pos'
+    | 'dox_sec';
 };
 
 export type BlockType = Block['type'];

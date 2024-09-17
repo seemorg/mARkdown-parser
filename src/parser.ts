@@ -9,6 +9,7 @@ import { Chapter } from './types/Chapter';
 import { Page } from './types/Page';
 import { splitParagraphByBlockQuotes } from './utils/block-quote';
 import { extractPageNumberFromLine } from './utils/page';
+import { prefixes } from './utils/prefixes';
 import { sanitizeLine } from './utils/sanitize';
 import { splitStringByHemistichs } from './utils/verse';
 
@@ -34,34 +35,6 @@ const handleHeader = (line: string) => {
 
   return null;
 };
-
-// @see https://maximromanov.github.io/mARkdown/#-biographies-and-events
-const biosAndEvents = [
-  {
-    prefix: '### $$$$',
-    context: 'names_list',
-  },
-  {
-    prefix: '### $$$',
-    context: 'cross_reference_biography',
-  },
-  {
-    prefix: '### $$',
-    context: 'woman_biography',
-  },
-  {
-    prefix: '### $',
-    context: 'man_biography',
-  },
-  {
-    prefix: '### @ RAW',
-    context: 'historical_events_batch',
-  },
-  {
-    prefix: '### @',
-    context: 'historical_events',
-  },
-];
 
 export function parseMarkdown(markdownText: string): ParseResult {
   const lines = markdownText.split('\n');
@@ -136,7 +109,7 @@ export function parseMarkdown(markdownText: string): ParseResult {
     if (pageNumber) {
       const { volume, page } = pageNumber;
       currentPage = { volume, page };
-      line = line.replace(pageNumber.string, '');
+      line = line.replace(new RegExp(pageNumber.strings.join('|'), 'g'), '');
     }
 
     // @see https://maximromanov.github.io/mARkdown/#morphological-patterns
@@ -171,15 +144,16 @@ export function parseMarkdown(markdownText: string): ParseResult {
         }
       }
 
-      biosAndEvents.forEach((entry) => {
+      for (const entry of prefixes) {
         if (line.startsWith(entry.prefix)) {
           addContentBlock({
             type: 'paragraph',
             content: line.slice(entry.prefix.length).trim(),
             extraContext: entry.context as Block['extraContext'],
           });
+          break;
         }
-      });
+      }
     }
 
     // If this is the end of the paragraph, add it to the content array.
@@ -197,6 +171,8 @@ export function parseMarkdown(markdownText: string): ParseResult {
             content: hemistichs.map((hemistich) => hemistich.trim()),
           });
         } else {
+          // clean any % from the current paragraph
+          currentParagraph = currentParagraph.replace(/%/g, '');
           const segments = splitParagraphByBlockQuotes(currentParagraph);
           segments.forEach((segment) => {
             if (currentParagraphContext) {
