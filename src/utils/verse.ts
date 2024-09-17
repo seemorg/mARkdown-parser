@@ -1,3 +1,16 @@
+// trim and filter out empty strings
+const prepareParts = (parts: string[]): string[] => {
+  const newParts: string[] = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed) {
+      newParts.push(trimmed);
+    }
+  }
+
+  return newParts;
+};
+
 /**
  * Split a string by hemistichs
  * @see https://maximromanov.github.io/mARkdown/#-verses-of-poetry
@@ -9,7 +22,7 @@ export function splitStringByHemistichs(input: string): string[] {
   // check if the input has %~%
   if (input.includes('%~%')) {
     const parts = input.split('%~%');
-    return parts;
+    return prepareParts(parts);
   }
 
   // fallback to % (openiti has mistakes)
@@ -23,5 +36,5 @@ export function splitStringByHemistichs(input: string): string[] {
     }
   }
 
-  return parts;
+  return prepareParts(parts);
 }

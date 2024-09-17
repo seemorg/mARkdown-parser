@@ -5,7 +5,7 @@ const openTagPatterns = [
 
 const patternsToRemove = [
   'Milestone300',
-  'AUTO',
+  'AUTO|CHECK',
   '@Y[BDYA](\\d+)',
   '@S(\\d+)',
   '@SOC(\\d+)',
@@ -37,5 +37,12 @@ export function sanitizeLine(line: string): string {
     result = result.replace(pattern, '');
   }, line);
 
-  return result.replace(/\s+/g, ' ').trim();
+  result = result.trim();
+
+  // remove $ at the end of the line
+  if (result.endsWith(' $')) {
+    result = result.slice(0, -2);
+  }
+
+  return result.replace(/\s+/g, ' ');
 }

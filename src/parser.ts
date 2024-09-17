@@ -99,7 +99,7 @@ export function parseMarkdown(markdownText: string): ParseResult {
       continue;
     }
 
-    line = sanitizeLine(line).trim();
+    line = sanitizeLine(line);
 
     if (line.length < 1) continue;
 
@@ -165,10 +165,22 @@ export function parseMarkdown(markdownText: string): ParseResult {
         const hemistichs = splitStringByHemistichs(currentParagraph);
 
         if (hemistichs.length > 1) {
+          // if it's an odd number, treat [0] as a paragraph
+          if (hemistichs.length % 2 !== 0) {
+            const nonVerse = hemistichs.shift()!;
+            const segments = splitParagraphByBlockQuotes(nonVerse);
+            segments.forEach((segment) => {
+              if (currentParagraphContext) {
+                segment.extraContext = currentParagraphContext;
+              }
+              addContentBlock(segment);
+            });
+          }
+
           // this is a verse
           addContentBlock({
             type: 'verse',
-            content: hemistichs.map((hemistich) => hemistich.trim()),
+            content: hemistichs,
           });
         } else {
           // clean any % from the current paragraph
