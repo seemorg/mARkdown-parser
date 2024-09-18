@@ -24,7 +24,7 @@ export function extractPageNumberFromLine(line: string): PageResult | null {
   }
 
   const stringsToRemove: string[] = [];
-  let vol: string;
+  let vol: number;
   let pg: number;
 
   pageNumberMatches.forEach((match) => {
@@ -34,7 +34,7 @@ export function extractPageNumberFromLine(line: string): PageResult | null {
     const page = parseInt(matchString.slice(8));
 
     if (!pg || page < pg) {
-      const volume = matchString.slice(5, 7);
+      const volume = parseInt(matchString.slice(5, 7));
       vol = volume;
       pg = page;
     }

@@ -1,4 +1,4 @@
 export type Page = {
-  volume: string;
+  volume: number;
   page: number;
 };
